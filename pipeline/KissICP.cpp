@@ -26,9 +26,9 @@
 #include <Eigen/Core>
 #include <vector>
 
-#include "kiss_icp/core/Preprocessing.hpp"
-#include "kiss_icp/core/Registration.hpp"
-#include "kiss_icp/core/VoxelHashMap.hpp"
+#include "kiss_icp_cpp/core/Preprocessing.hpp"
+#include "kiss_icp_cpp/core/Registration.hpp"
+#include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 
 namespace kiss_icp::pipeline {
 

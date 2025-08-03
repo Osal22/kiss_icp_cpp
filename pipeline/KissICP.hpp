@@ -26,10 +26,10 @@
 #include <tuple>
 #include <vector>
 
-#include "kiss_icp/core/Preprocessing.hpp"
-#include "kiss_icp/core/Registration.hpp"
-#include "kiss_icp/core/Threshold.hpp"
-#include "kiss_icp/core/VoxelHashMap.hpp"
+#include "kiss_icp_cpp/core/Preprocessing.hpp"
+#include "kiss_icp_cpp/core/Registration.hpp"
+#include "kiss_icp_cpp/core/Threshold.hpp"
+#include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 
 namespace kiss_icp::pipeline {
 
