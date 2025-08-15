@@ -23,7 +23,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(kiss_icp_cpp VERSION 1.2.3 LANGUAGES CXX)
 
-find_package(ament_cmake_auto)
+find_package(ament_cmake)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 # Setup build options
 option(USE_CCACHE "Build using Ccache if found on the path" ON)
@@ -50,15 +50,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(3rdparty/find_dependencies.cmake)
 include(cmake/CompilerOptions.cmake)
 
-ament_auto_add_library(kiss_icp_cpp SHARED src/core/Registration.cpp src/core/VoxelHashMap.cpp
-                      src/core/VoxelUtils.cpp src/core/Preprocessing.cpp src/core/Threshold.cpp
-                      )
+add_library(kiss_icp_cpp SHARED src/core/Registration.cpp src/core/VoxelHashMap.cpp
+                      src/core/VoxelUtils.cpp src/core/Preprocessing.cpp src/core/Threshold.cpp src/pipeline/KissICP.cpp
+)
 # Proper public include interface
 target_include_directories(kiss_icp_cpp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/kiss_icp_cpp>
-    $<INSTALL_INTERFACE:include/kiss_icp_cpp>  # <prefix>/include/mylib
+    $<INSTALL_INTERFACE:include/kiss_icp_cpp>
 )
-target_link_libraries(kiss_icp_cpp PUBLIC Eigen3::Eigen tsl::robin_map TBB::tbb Sophus::Sophus)
+target_link_libraries(kiss_icp_cpp PRIVATE Eigen3::Eigen tsl::robin_map TBB::tbb Sophus::Sophus)
 
 add_subdirectory(src/metrics)
 
@@ -77,4 +77,4 @@ install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 ament_export_include_directories("include/${PROJECT_NAME}")
 ament_export_targets(export_${PROJECT_NAME})
 
-ament_auto_package()
+ament_package()
