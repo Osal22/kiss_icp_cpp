@@ -22,27 +22,25 @@
 // SOFTWARE.
 #pragma once
 
-#include "kiss_icp_cpp/core/VoxelHashMap.hpp"
-
 #include <Eigen/Core>
 #include <sophus/se3.hpp>
-
 #include <vector>
 
-namespace kiss_icp
-{
+#include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 
-struct Registration
-{
-  explicit Registration(int max_num_iteration, double convergence_criterion, int max_num_threads);
+namespace kiss_icp {
 
-  Sophus::SE3d AlignPointsToMap(
-    const std::vector<Eigen::Vector3d> & frame, const VoxelHashMap & voxel_map,
-    const Sophus::SE3d & initial_guess, const double max_correspondence_distance,
-    const double kernel_scale);
+struct Registration {
+    explicit Registration(int max_num_iteration, double convergence_criterion, int max_num_threads);
 
-  int max_num_iterations_;
-  double convergence_criterion_;
-  int max_num_threads_;
+    Sophus::SE3d AlignPointsToMap(const std::vector<Eigen::Vector3d> &frame,
+                                  const VoxelHashMap &voxel_map,
+                                  const Sophus::SE3d &initial_guess,
+                                  const double max_correspondence_distance,
+                                  const double kernel_scale);
+
+    int max_num_iterations_;
+    double convergence_criterion_;
+    int max_num_threads_;
 };
 }  // namespace kiss_icp

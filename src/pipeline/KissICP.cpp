@@ -23,66 +23,58 @@
 
 #include "kiss_icp_cpp/pipeline/KissICP.hpp"
 
+#include <Eigen/Core>
+#include <iostream>
+#include <vector>
+
 #include "kiss_icp_cpp/core/Preprocessing.hpp"
 #include "kiss_icp_cpp/core/Registration.hpp"
 #include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 
-#include <Eigen/Core>
+namespace kiss_icp::pipeline {
 
-#include <iostream>
-#include <vector>
+KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
+                                                    const std::vector<double> &timestamps) {
+    // Preprocess the input cloud
+    const auto &preprocessed_frame = preprocessor_.Preprocess(frame, timestamps, last_delta_);
 
-namespace kiss_icp::pipeline
-{
+    // Voxelize
+    const auto &[source, frame_downsample] = Voxelize(preprocessed_frame);
 
-KissICP::Vector3dVectorTuple KissICP::RegisterFrame(
-  const std::vector<Eigen::Vector3d> & frame, const std::vector<double> & timestamps)
-{
-  // Preprocess the input cloud
-  const auto & preprocessed_frame = preprocessor_.Preprocess(frame, timestamps, last_delta_);
+    // Get adaptive_threshold
+    const double sigma = adaptive_threshold_.ComputeThreshold();
 
-  // Voxelize
-  const auto & [source, frame_downsample] = Voxelize(preprocessed_frame);
+    // Compute initial_guess for ICP
+    const auto initial_guess = last_pose_ * last_delta_;
 
-  // Get adaptive_threshold
-  const double sigma = adaptive_threshold_.ComputeThreshold();
+    // Run ICP
+    const auto new_pose = registration_.AlignPointsToMap(source,         // frame
+                                                         local_map_,     // voxel_map
+                                                         initial_guess,  // initial_guess
+                                                         3.0 * sigma,    // max_correspondence_dist
+                                                         sigma);         // kernel
 
-  // Compute initial_guess for ICP
-  const auto initial_guess = last_pose_ * last_delta_;
+    // Compute the difference between the prediction and the actual estimate
+    const auto model_deviation = initial_guess.inverse() * new_pose;
 
-  // Run ICP
-  const auto new_pose = registration_.AlignPointsToMap(
-    source,         // frame
-    local_map_,     // voxel_map
-    initial_guess,  // initial_guess
-    3.0 * sigma,    // max_correspondence_dist
-    sigma);         // kernel
+    // Update step: threshold, local map, delta, and the last pose
+    adaptive_threshold_.UpdateModelDeviation(model_deviation);
+    local_map_.Update(frame_downsample, new_pose);
+    last_delta_ = last_pose_.inverse() * new_pose;
+    last_pose_ = new_pose;
 
-  // Compute the difference between the prediction and the actual estimate
-  const auto model_deviation = initial_guess.inverse() * new_pose;
-
-  // Update step: threshold, local map, delta, and the last pose
-  adaptive_threshold_.UpdateModelDeviation(model_deviation);
-  local_map_.Update(frame_downsample, new_pose);
-  last_delta_ = last_pose_.inverse() * new_pose;
-  last_pose_ = new_pose;
-
-  // Return the (deskew) input raw scan (preprocessed_frame) and the points used for registration
-  // (source)
-  return {preprocessed_frame, source};
+    // Return the (deskew) input raw scan (preprocessed_frame) and the points used for registration
+    // (source)
+    return {preprocessed_frame, source};
 }
 
-KissICP::Vector3dVectorTuple KissICP::Voxelize(const std::vector<Eigen::Vector3d> & frame) const
-{
-  const auto voxel_size = config_.voxel_size;
-  const auto frame_downsample = kiss_icp::VoxelDownsample(frame, voxel_size * 0.5);
-  const auto source = kiss_icp::VoxelDownsample(frame_downsample, voxel_size * 1.5);
-  return {source, frame_downsample};
+KissICP::Vector3dVectorTuple KissICP::Voxelize(const std::vector<Eigen::Vector3d> &frame) const {
+    const auto voxel_size = config_.voxel_size;
+    const auto frame_downsample = kiss_icp::VoxelDownsample(frame, voxel_size * 0.5);
+    const auto source = kiss_icp::VoxelDownsample(frame_downsample, voxel_size * 1.5);
+    return {source, frame_downsample};
 }
 
-void KissICP::test_function()
-{
-  std::cout << "test functino" << std::endl;
-}
+void KissICP::test_function() { std::cout << "test functino" << std::endl; }
 
 }  // namespace kiss_icp::pipeline

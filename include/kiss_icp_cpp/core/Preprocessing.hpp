@@ -23,25 +23,24 @@
 #pragma once
 
 #include <Eigen/Core>
-#include <sophus/se3.hpp>
-
 #include <functional>
+#include <sophus/se3.hpp>
 #include <vector>
 
-namespace kiss_icp
-{
+namespace kiss_icp {
 
-struct Preprocessor
-{
-  Preprocessor(
-    const double max_range, const double min_range, const bool deskew, const int max_num_threads);
+struct Preprocessor {
+    Preprocessor(const double max_range,
+                 const double min_range,
+                 const bool deskew,
+                 const int max_num_threads);
 
-  std::vector<Eigen::Vector3d> Preprocess(
-    const std::vector<Eigen::Vector3d> & frame, const std::vector<double> & timestamps,
-    const Sophus::SE3d & relative_motion) const;
-  double max_range_;
-  double min_range_;
-  bool deskew_;
-  int max_num_threads_;
+    std::vector<Eigen::Vector3d> Preprocess(const std::vector<Eigen::Vector3d> &frame,
+                                            const std::vector<double> &timestamps,
+                                            const Sophus::SE3d &relative_motion) const;
+    double max_range_;
+    double min_range_;
+    bool deskew_;
+    int max_num_threads_;
 };
 }  // namespace kiss_icp

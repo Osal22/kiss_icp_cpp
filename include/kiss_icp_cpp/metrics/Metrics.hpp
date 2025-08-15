@@ -25,18 +25,16 @@
 #define KITTI_UTILS_H_
 
 #include <Eigen/Dense>
-
 #include <tuple>
 #include <vector>
 
-namespace kiss_icp::metrics
-{
+namespace kiss_icp::metrics {
 
-std::tuple<float, float> SeqError(
-  const std::vector<Eigen::Matrix4d> & poses_gt, const std::vector<Eigen::Matrix4d> & poses_result);
+std::tuple<float, float> SeqError(const std::vector<Eigen::Matrix4d> &poses_gt,
+                                  const std::vector<Eigen::Matrix4d> &poses_result);
 
-std::tuple<float, float> AbsoluteTrajectoryError(
-  const std::vector<Eigen::Matrix4d> & poses_gt, const std::vector<Eigen::Matrix4d> & poses_result);
+std::tuple<float, float> AbsoluteTrajectoryError(const std::vector<Eigen::Matrix4d> &poses_gt,
+                                                 const std::vector<Eigen::Matrix4d> &poses_result);
 }  // namespace kiss_icp::metrics
 
 #endif  // KITTI_UTILS_H_

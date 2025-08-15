@@ -24,27 +24,26 @@
 
 #include <sophus/se3.hpp>
 
-namespace kiss_icp
-{
+namespace kiss_icp {
 
-struct AdaptiveThreshold
-{
-  explicit AdaptiveThreshold(
-    double initial_threshold, double min_motion_threshold, double max_range);
+struct AdaptiveThreshold {
+    explicit AdaptiveThreshold(double initial_threshold,
+                               double min_motion_threshold,
+                               double max_range);
 
-  /// Update the current belief of the deviation from the prediction model
-  void UpdateModelDeviation(const Sophus::SE3d & current_deviation);
+    /// Update the current belief of the deviation from the prediction model
+    void UpdateModelDeviation(const Sophus::SE3d &current_deviation);
 
-  /// Returns the KISS-ICP adaptive threshold used in registration
-  inline double ComputeThreshold() const { return std::sqrt(model_sse_ / num_samples_); }
+    /// Returns the KISS-ICP adaptive threshold used in registration
+    inline double ComputeThreshold() const { return std::sqrt(model_sse_ / num_samples_); }
 
-  // configurable parameters
-  double min_motion_threshold_;
-  double max_range_;
+    // configurable parameters
+    double min_motion_threshold_;
+    double max_range_;
 
-  // Local cache for ccomputation
-  double model_sse_;
-  int num_samples_;
+    // Local cache for ccomputation
+    double model_sse_;
+    int num_samples_;
 };
 
 }  // namespace kiss_icp

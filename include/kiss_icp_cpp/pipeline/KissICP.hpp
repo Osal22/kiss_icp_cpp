@@ -21,85 +21,80 @@
 // SOFTWARE.
 #pragma once
 
+#include <Eigen/Core>
+#include <sophus/se3.hpp>
+#include <tuple>
+#include <vector>
+
 #include "kiss_icp_cpp/core/Preprocessing.hpp"
 #include "kiss_icp_cpp/core/Registration.hpp"
 #include "kiss_icp_cpp/core/Threshold.hpp"
 #include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 
-#include <Eigen/Core>
-#include <sophus/se3.hpp>
+namespace kiss_icp::pipeline {
 
-#include <tuple>
-#include <vector>
+struct KISSConfig {
+    // map params
+    double voxel_size = 1.0;
+    double max_range = 100.0;
+    double min_range = 0.0;
+    int max_points_per_voxel = 20;
 
-namespace kiss_icp::pipeline
-{
+    // th parms
+    double min_motion_th = 0.1;
+    double initial_threshold = 2.0;
 
-struct KISSConfig
-{
-  // map params
-  double voxel_size = 1.0;
-  double max_range = 100.0;
-  double min_range = 0.0;
-  int max_points_per_voxel = 20;
+    // registration params
+    int max_num_iterations = 500;
+    double convergence_criterion = 0.0001;
+    int max_num_threads = 0;
 
-  // th parms
-  double min_motion_th = 0.1;
-  double initial_threshold = 2.0;
-
-  // registration params
-  int max_num_iterations = 500;
-  double convergence_criterion = 0.0001;
-  int max_num_threads = 0;
-
-  // Motion compensation
-  bool deskew = false;
+    // Motion compensation
+    bool deskew = false;
 };
 
-class KissICP
-{
+class KissICP {
 public:
-  using Vector3dVector = std::vector<Eigen::Vector3d>;
-  using Vector3dVectorTuple = std::tuple<Vector3dVector, Vector3dVector>;
-
-public:
-  explicit KissICP(const KISSConfig & config)
-  : config_(config),
-    preprocessor_(config.max_range, config.min_range, config.deskew, config.max_num_threads),
-    registration_(config.max_num_iterations, config.convergence_criterion, config.max_num_threads),
-    local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel),
-    adaptive_threshold_(config.initial_threshold, config.min_motion_th, config.max_range)
-  {
-  }
+    using Vector3dVector = std::vector<Eigen::Vector3d>;
+    using Vector3dVectorTuple = std::tuple<Vector3dVector, Vector3dVector>;
 
 public:
-  Vector3dVectorTuple RegisterFrame(
-    const std::vector<Eigen::Vector3d> & frame, const std::vector<double> & timestamps);
-  Vector3dVectorTuple Voxelize(const std::vector<Eigen::Vector3d> & frame) const;
+    explicit KissICP(const KISSConfig &config)
+        : config_(config),
+          preprocessor_(config.max_range, config.min_range, config.deskew, config.max_num_threads),
+          registration_(
+              config.max_num_iterations, config.convergence_criterion, config.max_num_threads),
+          local_map_(config.voxel_size, config.max_range, config.max_points_per_voxel),
+          adaptive_threshold_(config.initial_threshold, config.min_motion_th, config.max_range) {}
 
-  std::vector<Eigen::Vector3d> LocalMap() const { return local_map_.Pointcloud(); };
+public:
+    Vector3dVectorTuple RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
+                                      const std::vector<double> &timestamps);
+    Vector3dVectorTuple Voxelize(const std::vector<Eigen::Vector3d> &frame) const;
 
-  const VoxelHashMap & VoxelMap() const { return local_map_; };
-  VoxelHashMap & VoxelMap() { return local_map_; };
+    std::vector<Eigen::Vector3d> LocalMap() const { return local_map_.Pointcloud(); };
 
-  const Sophus::SE3d & pose() const { return last_pose_; }
-  Sophus::SE3d & pose() { return last_pose_; }
+    const VoxelHashMap &VoxelMap() const { return local_map_; };
+    VoxelHashMap &VoxelMap() { return local_map_; };
 
-  const Sophus::SE3d & delta() const { return last_delta_; }
-  Sophus::SE3d & delta() { return last_delta_; }
+    const Sophus::SE3d &pose() const { return last_pose_; }
+    Sophus::SE3d &pose() { return last_pose_; }
 
-  void test_function();
+    const Sophus::SE3d &delta() const { return last_delta_; }
+    Sophus::SE3d &delta() { return last_delta_; }
+
+    void test_function();
 
 private:
-  Sophus::SE3d last_pose_;
-  Sophus::SE3d last_delta_;
+    Sophus::SE3d last_pose_;
+    Sophus::SE3d last_delta_;
 
-  // KISS-ICP pipeline modules
-  KISSConfig config_;
-  Preprocessor preprocessor_;
-  Registration registration_;
-  VoxelHashMap local_map_;
-  AdaptiveThreshold adaptive_threshold_;
+    // KISS-ICP pipeline modules
+    KISSConfig config_;
+    Preprocessor preprocessor_;
+    Registration registration_;
+    VoxelHashMap local_map_;
+    AdaptiveThreshold adaptive_threshold_;
 };
 
 }  // namespace kiss_icp::pipeline
