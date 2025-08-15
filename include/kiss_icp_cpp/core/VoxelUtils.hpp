@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2022 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
+// Copyright (c) 2024 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
 // Stachniss.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,30 +20,38 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+//
 #pragma once
 
-#include <sophus/se3.hpp>
+#include <Eigen/Core>
 
-namespace kiss_icp {
+#include <cmath>
+#include <vector>
 
-struct AdaptiveThreshold {
-    explicit AdaptiveThreshold(double initial_threshold,
-                               double min_motion_threshold,
-                               double max_range);
+namespace kiss_icp
+{
 
-    /// Update the current belief of the deviation from the prediction model
-    void UpdateModelDeviation(const Sophus::SE3d &current_deviation);
+using Voxel = Eigen::Vector3i;
+inline Voxel PointToVoxel(const Eigen::Vector3d & point, const double voxel_size)
+{
+  return Voxel(
+    static_cast<int>(std::floor(point.x() / voxel_size)),
+    static_cast<int>(std::floor(point.y() / voxel_size)),
+    static_cast<int>(std::floor(point.z() / voxel_size)));
+}
 
-    /// Returns the KISS-ICP adaptive threshold used in registration
-    inline double ComputeThreshold() const { return std::sqrt(model_sse_ / num_samples_); }
-
-    // configurable parameters
-    double min_motion_threshold_;
-    double max_range_;
-
-    // Local cache for ccomputation
-    double model_sse_;
-    int num_samples_;
-};
+/// Voxelize a point cloud keeping the original coordinates
+std::vector<Eigen::Vector3d> VoxelDownsample(
+  const std::vector<Eigen::Vector3d> & frame, const double voxel_size);
 
 }  // namespace kiss_icp
+
+template <>
+struct std::hash<kiss_icp::Voxel>
+{
+  std::size_t operator()(const kiss_icp::Voxel & voxel) const
+  {
+    const uint32_t * vec = reinterpret_cast<const uint32_t *>(voxel.data());
+    return (vec[0] * 73856093 ^ vec[1] * 19349669 ^ vec[2] * 83492791);
+  }
+};

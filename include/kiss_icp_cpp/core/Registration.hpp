@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2024 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
+// Copyright (c) 2022 Ignacio Vizzo, Tiziano Guadagnino, Benedikt Mersch, Cyrill
 // Stachniss.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,32 +20,29 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-//
 #pragma once
 
+#include "kiss_icp_cpp/core/VoxelHashMap.hpp"
+
 #include <Eigen/Core>
-#include <cmath>
+#include <sophus/se3.hpp>
+
 #include <vector>
 
-namespace kiss_icp {
+namespace kiss_icp
+{
 
-using Voxel = Eigen::Vector3i;
-inline Voxel PointToVoxel(const Eigen::Vector3d &point, const double voxel_size) {
-    return Voxel(static_cast<int>(std::floor(point.x() / voxel_size)),
-                 static_cast<int>(std::floor(point.y() / voxel_size)),
-                 static_cast<int>(std::floor(point.z() / voxel_size)));
-}
+struct Registration
+{
+  explicit Registration(int max_num_iteration, double convergence_criterion, int max_num_threads);
 
-/// Voxelize a point cloud keeping the original coordinates
-std::vector<Eigen::Vector3d> VoxelDownsample(const std::vector<Eigen::Vector3d> &frame,
-                                             const double voxel_size);
+  Sophus::SE3d AlignPointsToMap(
+    const std::vector<Eigen::Vector3d> & frame, const VoxelHashMap & voxel_map,
+    const Sophus::SE3d & initial_guess, const double max_correspondence_distance,
+    const double kernel_scale);
 
-}  // namespace kiss_icp
-
-template <>
-struct std::hash<kiss_icp::Voxel> {
-    std::size_t operator()(const kiss_icp::Voxel &voxel) const {
-        const uint32_t *vec = reinterpret_cast<const uint32_t *>(voxel.data());
-        return (vec[0] * 73856093 ^ vec[1] * 19349669 ^ vec[2] * 83492791);
-    }
+  int max_num_iterations_;
+  double convergence_criterion_;
+  int max_num_threads_;
 };
+}  // namespace kiss_icp

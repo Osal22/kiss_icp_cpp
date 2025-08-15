@@ -20,21 +20,28 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#pragma once
 
-#ifndef KITTI_UTILS_H_
-#define KITTI_UTILS_H_
+#include <Eigen/Core>
+#include <sophus/se3.hpp>
 
-#include <Eigen/Dense>
-#include <tuple>
+#include <functional>
 #include <vector>
 
-namespace kiss_icp::metrics {
+namespace kiss_icp
+{
 
-std::tuple<float, float> SeqError(const std::vector<Eigen::Matrix4d> &poses_gt,
-                                  const std::vector<Eigen::Matrix4d> &poses_result);
+struct Preprocessor
+{
+  Preprocessor(
+    const double max_range, const double min_range, const bool deskew, const int max_num_threads);
 
-std::tuple<float, float> AbsoluteTrajectoryError(const std::vector<Eigen::Matrix4d> &poses_gt,
-                                                 const std::vector<Eigen::Matrix4d> &poses_result);
-}  // namespace kiss_icp::metrics
-
-#endif  // KITTI_UTILS_H_
+  std::vector<Eigen::Vector3d> Preprocess(
+    const std::vector<Eigen::Vector3d> & frame, const std::vector<double> & timestamps,
+    const Sophus::SE3d & relative_motion) const;
+  double max_range_;
+  double min_range_;
+  bool deskew_;
+  int max_num_threads_;
+};
+}  // namespace kiss_icp

@@ -22,25 +22,29 @@
 // SOFTWARE.
 #pragma once
 
-#include <Eigen/Core>
 #include <sophus/se3.hpp>
-#include <vector>
 
-#include "VoxelHashMap.hpp"
+namespace kiss_icp
+{
 
-namespace kiss_icp {
+struct AdaptiveThreshold
+{
+  explicit AdaptiveThreshold(
+    double initial_threshold, double min_motion_threshold, double max_range);
 
-struct Registration {
-    explicit Registration(int max_num_iteration, double convergence_criterion, int max_num_threads);
+  /// Update the current belief of the deviation from the prediction model
+  void UpdateModelDeviation(const Sophus::SE3d & current_deviation);
 
-    Sophus::SE3d AlignPointsToMap(const std::vector<Eigen::Vector3d> &frame,
-                                  const VoxelHashMap &voxel_map,
-                                  const Sophus::SE3d &initial_guess,
-                                  const double max_correspondence_distance,
-                                  const double kernel_scale);
+  /// Returns the KISS-ICP adaptive threshold used in registration
+  inline double ComputeThreshold() const { return std::sqrt(model_sse_ / num_samples_); }
 
-    int max_num_iterations_;
-    double convergence_criterion_;
-    int max_num_threads_;
+  // configurable parameters
+  double min_motion_threshold_;
+  double max_range_;
+
+  // Local cache for ccomputation
+  double model_sse_;
+  int num_samples_;
 };
+
 }  // namespace kiss_icp
