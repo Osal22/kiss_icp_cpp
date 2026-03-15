@@ -21,8 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include "kiss_icp_cpp/pipeline/KissICP.hpp"
-
 #include <Eigen/Core>
 #include <iostream>
 #include <vector>
@@ -30,8 +28,43 @@
 #include "kiss_icp_cpp/core/Preprocessing.hpp"
 #include "kiss_icp_cpp/core/Registration.hpp"
 #include "kiss_icp_cpp/core/VoxelHashMap.hpp"
+#include "kiss_icp_cpp/pipeline/KissICP.hpp"
 
 namespace kiss_icp::pipeline {
+
+KissICP::Vector3dVectorTuple KissICP::RegisterFrameWithoudLocalMapupdate(
+    const std::vector<Eigen::Vector3d> &frame, const std::vector<double> &timestamps) {
+    // Preprocess the input cloud
+    const auto &preprocessed_frame = preprocessor_.Preprocess(frame, timestamps, last_delta_);
+
+    // Voxelize
+    const auto &[source, frame_downsample] = Voxelize(preprocessed_frame);
+
+    // Get adaptive_threshold
+    const double sigma = adaptive_threshold_.ComputeThreshold();
+
+    // Compute initial_guess for ICP
+    const auto initial_guess = last_pose_ * last_delta_;
+
+    // Run ICP
+    const auto new_pose = registration_.AlignPointsToMap(source,         // frame
+                                                         local_map_,     // voxel_map
+                                                         initial_guess,  // initial_guess
+                                                         3.0 * sigma,    // max_correspondence_dist
+                                                         sigma);         // kernel
+
+    // Compute the difference between the prediction and the actual estimate
+    const auto model_deviation = initial_guess.inverse() * new_pose;
+
+    // Update step: threshold, local map, delta, and the last pose
+    adaptive_threshold_.UpdateModelDeviation(model_deviation);
+    last_delta_ = last_pose_.inverse() * new_pose;
+    last_pose_ = new_pose;
+
+    // Return the (deskew) input raw scan (preprocessed_frame) and the points used for registration
+    // (source)
+    return {preprocessed_frame, source};
+}
 
 KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
                                                     const std::vector<double> &timestamps) {
@@ -66,6 +99,12 @@ KissICP::Vector3dVectorTuple KissICP::RegisterFrame(const std::vector<Eigen::Vec
     // Return the (deskew) input raw scan (preprocessed_frame) and the points used for registration
     // (source)
     return {preprocessed_frame, source};
+}
+
+void KissICP::updateLocalMap(const std::vector<Eigen::Vector3d> &frame) {
+    Sophus::SE3d pose_origin = Sophus::SE3d();
+    const auto &[source, frame_downsample] = Voxelize(frame);
+    local_map_.Update(frame_downsample, pose_origin);
 }
 
 KissICP::Vector3dVectorTuple KissICP::Voxelize(const std::vector<Eigen::Vector3d> &frame) const {

@@ -70,6 +70,14 @@ public:
 public:
     Vector3dVectorTuple RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
                                       const std::vector<double> &timestamps);
+
+    Vector3dVectorTuple RegisterFrameWithoudLocalMapupdate(
+        const std::vector<Eigen::Vector3d> &frame, const std::vector<double> &timestamps);
+
+    void updateLocalMap(const std::vector<Eigen::Vector3d> &frame);
+
+    void setInitalPose(const Sophus::SE3d &initial_guess) { last_pose_ = initial_guess; };
+
     Vector3dVectorTuple Voxelize(const std::vector<Eigen::Vector3d> &frame) const;
 
     std::vector<Eigen::Vector3d> LocalMap() const { return local_map_.Pointcloud(); };
@@ -85,15 +93,17 @@ public:
 
     void test_function();
 
-private:
+    VoxelHashMap local_map_;
+
     Sophus::SE3d last_pose_;
+
+private:
     Sophus::SE3d last_delta_;
 
     // KISS-ICP pipeline modules
     KISSConfig config_;
     Preprocessor preprocessor_;
     Registration registration_;
-    VoxelHashMap local_map_;
     AdaptiveThreshold adaptive_threshold_;
 };
 
