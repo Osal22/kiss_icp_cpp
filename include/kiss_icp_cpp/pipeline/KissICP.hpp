@@ -69,10 +69,13 @@ public:
 
 public:
     Vector3dVectorTuple RegisterFrame(const std::vector<Eigen::Vector3d> &frame,
-                                      const std::vector<double> &timestamps);
+                                      const std::vector<double> &timestamps,
+                                      double &iteration_number);
 
     Vector3dVectorTuple RegisterFrameWithoudLocalMapupdate(
-        const std::vector<Eigen::Vector3d> &frame, const std::vector<double> &timestamps);
+        const std::vector<Eigen::Vector3d> &frame,
+        const std::vector<double> &timestamps,
+        double &iteration_number);
 
     void updateLocalMap(const std::vector<Eigen::Vector3d> &frame);
 

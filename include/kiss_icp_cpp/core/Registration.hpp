@@ -37,7 +37,8 @@ struct Registration {
                                   const VoxelHashMap &voxel_map,
                                   const Sophus::SE3d &initial_guess,
                                   const double max_correspondence_distance,
-                                  const double kernel_scale);
+                                  const double kernel_scale,
+                                  double &iteration_number);
 
     int max_num_iterations_;
     double convergence_criterion_;

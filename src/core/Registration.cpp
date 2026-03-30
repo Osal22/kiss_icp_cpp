@@ -20,8 +20,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-#include "kiss_icp_cpp/core/Registration.hpp"
-
 #include <tbb/blocked_range.h>
 #include <tbb/concurrent_vector.h>
 #include <tbb/global_control.h>
@@ -37,6 +35,7 @@
 #include <sophus/so3.hpp>
 #include <tuple>
 
+#include "kiss_icp_cpp/core/Registration.hpp"
 #include "kiss_icp_cpp/core/VoxelHashMap.hpp"
 #include "kiss_icp_cpp/core/VoxelUtils.hpp"
 
@@ -139,7 +138,8 @@ Sophus::SE3d Registration::AlignPointsToMap(const std::vector<Eigen::Vector3d> &
                                             const VoxelHashMap &voxel_map,
                                             const Sophus::SE3d &initial_guess,
                                             const double max_distance,
-                                            const double kernel_scale) {
+                                            const double kernel_scale,
+                                            double &iteration_number) {
     if (voxel_map.Empty()) return initial_guess;
 
     // Equation (9)
@@ -160,6 +160,7 @@ Sophus::SE3d Registration::AlignPointsToMap(const std::vector<Eigen::Vector3d> &
         // Update iterations
         T_icp = estimation * T_icp;
         // Termination criteria
+        iteration_number = j;
         if (dx.norm() < convergence_criterion_) break;
     }
     // Spit the final transformation
